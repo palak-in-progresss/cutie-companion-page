@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
@@ -17,13 +18,23 @@ interface AuthDialogProps {
 }
 
 const AuthDialog = ({ open, onOpenChange, mode }: AuthDialogProps) => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement authentication logic
-    console.log(mode, { email, password });
+    
+    // Mock authentication - store in localStorage
+    localStorage.setItem("isAuthenticated", "true");
+    if (name) {
+      localStorage.setItem("userName", name);
+    }
+    
+    // Close dialog and navigate to mood check
+    onOpenChange(false);
+    navigate("/mood-check");
   };
 
   return (
@@ -40,6 +51,20 @@ const AuthDialog = ({ open, onOpenChange, mode }: AuthDialogProps) => {
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+          {mode === "signup" && (
+            <div className="space-y-2">
+              <Label htmlFor="name">Name</Label>
+              <Input
+                id="name"
+                type="text"
+                placeholder="Your name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                className="rounded-full border-input focus:ring-2 focus:ring-primary"
+              />
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
