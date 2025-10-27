@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { Heart, Calendar, Edit2, Send, BookOpen, LogOut } from "lucide-react";
+import { Heart, Calendar, Edit2, Send, BookOpen, LogOut, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -126,8 +126,18 @@ const Journal = () => {
             <Button
               variant="ghost"
               size="icon"
+              onClick={() => navigate("/dashboard")}
+              className="rounded-full"
+              title="Dashboard"
+            >
+              <BarChart3 className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => navigate("/planner")}
               className="rounded-full"
+              title="Planner"
             >
               📋
             </Button>
@@ -136,6 +146,7 @@ const Journal = () => {
               size="icon"
               onClick={handleLogout}
               className="rounded-full"
+              title="Logout"
             >
               <LogOut className="w-4 h-4" />
             </Button>
