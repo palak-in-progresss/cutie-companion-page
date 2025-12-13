@@ -1,28 +1,34 @@
 import { supabase } from "@/integrations/supabase/client";
+import { usersApi } from "./users";
 
 export interface UserProfile {
   id: string;
-  name: string | null;
-  email: string | null;
+  email: string;
   created_at: string;
-  updated_at: string;
 }
 
 export const authApi = {
   // Sign up with email and password
-  async signUp(email: string, password: string, name: string) {
-    const { data, error } = await supabase.auth.signUp({
+  async signUp(email: string, password: string) {
+    // Sign up with Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
-      options: {
-        data: {
-          name: name,
-        },
-      },
     });
 
-    if (error) throw error;
-    return data;
+    if (authError) throw authError;
+
+    // Create user in custom users table
+    if (authData.user) {
+      try {
+        await usersApi.createUser({ email });
+      } catch (error) {
+        // User might already exist, that's okay
+        console.log("User already exists in users table");
+      }
+    }
+
+    return authData;
   },
 
   // Sign in with email and password
@@ -33,6 +39,16 @@ export const authApi = {
     });
 
     if (error) throw error;
+
+    // Ensure user exists in custom users table
+    if (data.user) {
+      try {
+        await usersApi.getOrCreateUser(email);
+      } catch (error) {
+        console.error("Error syncing user:", error);
+      }
+    }
+
     return data;
   },
 
@@ -42,7 +58,7 @@ export const authApi = {
     if (error) throw error;
   },
 
-  // Get current user
+  // Get current user from Supabase Auth
   async getCurrentUser() {
     const {
       data: { user },
@@ -53,41 +69,35 @@ export const authApi = {
     return user;
   },
 
-  // Get user profile
+  // Get user from custom users table
   async getUserProfile(): Promise<UserProfile | null> {
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user) return null;
+    if (!user || !user.email) return null;
 
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .single();
-
-    if (error) throw error;
-    return data as UserProfile;
+    try {
+      const userData = await usersApi.getUserByEmail(user.email);
+      return userData;
+    } catch (error) {
+      // If user doesn't exist in custom table, create it
+      if (user.email) {
+        try {
+          return await usersApi.createUser({ email: user.email });
+        } catch (createError) {
+          console.error("Error creating user:", createError);
+          return null;
+        }
+      }
+      return null;
+    }
   },
 
-  // Update user profile
-  async updateProfile(updates: Partial<UserProfile>) {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) throw new Error("Not authenticated");
-
-    const { data, error } = await supabase
-      .from("profiles")
-      .update(updates)
-      .eq("id", user.id)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data as UserProfile;
+  // Get user ID from custom users table (for use in other APIs)
+  async getUserId(): Promise<string | null> {
+    const profile = await this.getUserProfile();
+    return profile?.id || null;
   },
 
   // Listen to auth state changes
@@ -95,4 +105,3 @@ export const authApi = {
     return supabase.auth.onAuthStateChange(callback);
   },
 };
-

@@ -3,9 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 export interface MoodEntry {
   id: string;
   user_id: string;
-  mood: string;
+  mood: string | null;
   note: string | null;
-  date: string;
   created_at: string;
 }
 
@@ -15,11 +14,12 @@ export interface CreateMoodEntry {
 }
 
 export const moodApi = {
-  // Get all mood history
-  async getAllMoods() {
+  // Get all mood entries for a user
+  async getAllMoods(userId: string) {
     const { data, error } = await supabase
-      .from("mood_history")
+      .from("mood_entries")
       .select("*")
+      .eq("user_id", userId)
       .order("created_at", { ascending: false });
 
     if (error) throw error;
@@ -27,12 +27,13 @@ export const moodApi = {
   },
 
   // Get today's mood
-  async getTodayMood() {
+  async getTodayMood(userId: string) {
     const today = new Date().toISOString().split("T")[0];
     const { data, error } = await supabase
-      .from("mood_history")
+      .from("mood_entries")
       .select("*")
-      .eq("date", today)
+      .eq("user_id", userId)
+      .gte("created_at", today)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -42,13 +43,13 @@ export const moodApi = {
   },
 
   // Create a new mood entry
-  async createMood(mood: CreateMoodEntry) {
+  async createMood(userId: string, mood: CreateMoodEntry) {
     const { data, error } = await supabase
-      .from("mood_history")
+      .from("mood_entries")
       .insert({
+        user_id: userId,
         mood: mood.mood,
         note: mood.note || null,
-        date: new Date().toISOString().split("T")[0],
       })
       .select()
       .single();
@@ -57,17 +58,17 @@ export const moodApi = {
     return data as MoodEntry;
   },
 
-  // Get mood history by date range
-  async getMoodsByDateRange(startDate: string, endDate: string) {
+  // Get mood entries by date range
+  async getMoodsByDateRange(userId: string, startDate: string, endDate: string) {
     const { data, error } = await supabase
-      .from("mood_history")
+      .from("mood_entries")
       .select("*")
-      .gte("date", startDate)
-      .lte("date", endDate)
-      .order("date", { ascending: false });
+      .eq("user_id", userId)
+      .gte("created_at", startDate)
+      .lte("created_at", endDate)
+      .order("created_at", { ascending: false });
 
     if (error) throw error;
     return data as MoodEntry[];
   },
 };
-

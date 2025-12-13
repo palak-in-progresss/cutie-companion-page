@@ -43,6 +43,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Trigger for journal_entries updated_at
+DROP TRIGGER IF EXISTS update_journal_entries_updated_at ON journal_entries;
 CREATE TRIGGER update_journal_entries_updated_at
   BEFORE UPDATE ON journal_entries
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
