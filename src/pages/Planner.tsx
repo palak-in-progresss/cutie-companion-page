@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Heart, ArrowLeft, Plus, X, Check, Sparkles, Candle } from "lucide-react";
+import { Heart, ArrowLeft, Plus, X, Check, Sparkles, Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -157,7 +157,7 @@ const Planner = () => {
           <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-3xl p-6 mb-6 text-center animate-fade-in hover:shadow-xl transition-all duration-300 border border-border/50 relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-secondary/5 animate-pulse"></div>
             <div className="relative flex items-center justify-center gap-3">
-              <Candle className="w-6 h-6 text-primary animate-pulse" />
+              <Flame className="w-6 h-6 text-primary animate-pulse" />
               <p className="text-lg text-foreground font-medium">
                 {dailyQuote}
               </p>
