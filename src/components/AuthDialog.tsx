@@ -10,6 +10,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { authApi } from "@/lib/api/auth";
+import { toast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
 
 interface AuthDialogProps {
   open: boolean;
@@ -22,19 +25,47 @@ const AuthDialog = ({ open, onOpenChange, mode }: AuthDialogProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Mock authentication - store in localStorage
-    localStorage.setItem("isAuthenticated", "true");
-    if (name) {
-      localStorage.setItem("userName", name);
+    setError(null);
+    setIsLoading(true);
+
+    try {
+      if (mode === "signup") {
+        if (!name.trim()) {
+          setError("Please enter your name");
+          setIsLoading(false);
+          return;
+        }
+        await authApi.signUp(email, password, name);
+        toast({
+          title: "Account created! 🌸",
+          description: "Welcome to Companion Journal!",
+        });
+      } else {
+        await authApi.signIn(email, password);
+        toast({
+          title: "Welcome back! 💕",
+          description: "Good to see you again!",
+        });
+      }
+
+      // Close dialog and navigate to mood check
+      onOpenChange(false);
+      navigate("/mood-check");
+    } catch (err: any) {
+      setError(err.message || "An error occurred. Please try again.");
+      toast({
+        title: "Authentication failed",
+        description: err.message || "Please check your credentials and try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
-    
-    // Close dialog and navigate to mood check
-    onOpenChange(false);
-    navigate("/mood-check");
   };
 
   return (
@@ -89,11 +120,24 @@ const AuthDialog = ({ open, onOpenChange, mode }: AuthDialogProps) => {
               className="rounded-full border-input focus:ring-2 focus:ring-primary"
             />
           </div>
+          {error && (
+            <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 text-sm text-destructive">
+              {error}
+            </div>
+          )}
           <Button
             type="submit"
-            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-full py-6"
+            disabled={isLoading}
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-full py-6 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl"
           >
-            {mode === "login" ? "Sign In" : "Create Account"}
+            {isLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                {mode === "login" ? "Signing in..." : "Creating account..."}
+              </>
+            ) : (
+              mode === "login" ? "Sign In ✨" : "Create Account 🌸"
+            )}
           </Button>
         </form>
       </DialogContent>
