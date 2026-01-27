@@ -43,7 +43,7 @@ export const authApi = {
     // Ensure user exists in custom users table
     if (data.user) {
       try {
-        await usersApi.getOrCreateUser(email);
+        await usersApi.getOrCreateUser(data.user.id, email);
       } catch (error) {
         console.error("Error syncing user:", error);
       }

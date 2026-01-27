@@ -53,7 +53,7 @@ export const usersApi = {
   },
 
   // Check if user exists, create if not
-  async getOrCreateUser(email: string) {
+  async getOrCreateUser(id: string, email: string) {
     // Try to get existing user
     const existing = await this.getUserByEmail(email);
     if (existing) {
@@ -61,7 +61,7 @@ export const usersApi = {
     }
 
     // Create new user if doesn't exist
-    return await this.createUser({ email });
+    return await this.createUser({ id, email });
   },
 };
 
