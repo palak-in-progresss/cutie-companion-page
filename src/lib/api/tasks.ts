@@ -18,9 +18,13 @@ export interface CreateTask {
 export const tasksApi = {
   // Get all tasks
   async getAllTasks() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
     const { data, error } = await supabase
       .from("tasks")
       .select("*")
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
     if (error) throw error;
@@ -29,10 +33,14 @@ export const tasksApi = {
 
   // Get today's tasks
   async getTodayTasks() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
     const today = new Date().toISOString().split("T")[0];
     const { data, error } = await supabase
       .from("tasks")
       .select("*")
+      .eq("user_id", user.id)
       .eq("date", today)
       .order("created_at", { ascending: false });
 
@@ -42,9 +50,13 @@ export const tasksApi = {
 
   // Create a new task
   async createTask(task: CreateTask) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
     const { data, error } = await supabase
       .from("tasks")
       .insert({
+        user_id: user.id,
         text: task.text,
         date: task.date || new Date().toISOString().split("T")[0],
         completed: false,

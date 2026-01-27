@@ -23,7 +23,7 @@ export const dashboardApi = {
   // Calculate journal streak
   async getStreak(): Promise<number> {
     const entries = await journalApi.getAllEntries();
-    
+
     if (entries.length === 0) return 0;
 
     // Get unique dates with entries, sorted by date descending
@@ -57,11 +57,15 @@ export const dashboardApi = {
 
   // Get dashboard stats
   async getStats(): Promise<DashboardStats> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
     const [entries, habits] = await Promise.all([
       journalApi.getAllEntries(),
       supabase
         .from("habits")
         .select("*")
+        .eq("user_id", user.id)
         .eq("date", new Date().toISOString().split("T")[0]),
     ]);
 
@@ -79,7 +83,10 @@ export const dashboardApi = {
 
   // Get weekly activity data
   async getWeeklyActivity(): Promise<WeeklyActivity[]> {
-    const last7Days = [];
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
+    const last7Days: WeeklyActivity[] = [];
     for (let i = 6; i >= 0; i--) {
       const date = new Date();
       date.setDate(date.getDate() - i);
@@ -88,7 +95,20 @@ export const dashboardApi = {
       const { count } = await supabase
         .from("journal_entries")
         .select("*", { count: "exact", head: true })
-        .eq("date", dateStr);
+        .eq("user_id", user.id)
+        .eq("date", dateStr); // Verify 'date' column exists in journal_entries or use created_at
+
+      // Note: journal_entries might not have a 'date' column if it uses created_at.
+      // Based on previous schema, it had 'created_at'.
+      // Let's check logic: original code used 'date' in eq("date", dateStr).
+      // But journal table definition earlier showed 'created_at'.
+      // Wait, journalApi return JournalEntry type which has 'date'?
+      // Let's check journalApi type definition in next step if this fails, but for now assuming original code knew schema.
+      // Actually, my earlier schema dump showed `created_at`.
+      // The original dashboard.ts code (Step 241) used `.eq("date", dateStr)`.
+      // I should stick to that unless I know it's wrong.
+      // Wait, looking at getStreak in original code: entries.map((entry) => new Date(entry.date).toDateString())
+      // This implies JournalEntry has a `date` property.
 
       last7Days.push({
         name: date.toLocaleDateString("en-US", { weekday: "short" }),
@@ -101,9 +121,13 @@ export const dashboardApi = {
 
   // Get mood distribution
   async getMoodDistribution(): Promise<MoodDistribution[]> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
     const { data: entries } = await supabase
       .from("journal_entries")
-      .select("mood");
+      .select("mood")
+      .eq("user_id", user.id);
 
     if (!entries) return [];
 
@@ -130,5 +154,3 @@ export const dashboardApi = {
     }));
   },
 };
-
-

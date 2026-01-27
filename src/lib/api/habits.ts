@@ -20,9 +20,13 @@ export interface CreateHabit {
 export const habitsApi = {
   // Get all habits
   async getAllHabits() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
     const { data, error } = await supabase
       .from("habits")
       .select("*")
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
     if (error) throw error;
@@ -31,10 +35,14 @@ export const habitsApi = {
 
   // Get today's habits
   async getTodayHabits() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
     const today = new Date().toISOString().split("T")[0];
     const { data, error } = await supabase
       .from("habits")
       .select("*")
+      .eq("user_id", user.id)
       .eq("date", today)
       .order("created_at", { ascending: false });
 
@@ -44,12 +52,16 @@ export const habitsApi = {
 
   // Initialize default habits for today if they don't exist
   async initializeDefaultHabits() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
     const today = new Date().toISOString().split("T")[0];
-    
+
     // Check if habits already exist for today
     const { data: existingHabits } = await supabase
       .from("habits")
       .select("id")
+      .eq("user_id", user.id)
       .eq("date", today)
       .limit(1);
 
@@ -70,6 +82,7 @@ export const habitsApi = {
       .from("habits")
       .insert(
         defaultHabits.map((habit) => ({
+          user_id: user.id,
           label: habit.label,
           emoji: habit.emoji,
           date: today,
@@ -84,9 +97,13 @@ export const habitsApi = {
 
   // Create a new habit
   async createHabit(habit: CreateHabit) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
     const { data, error } = await supabase
       .from("habits")
       .insert({
+        user_id: user.id,
         label: habit.label,
         emoji: habit.emoji || null,
         date: habit.date || new Date().toISOString().split("T")[0],
