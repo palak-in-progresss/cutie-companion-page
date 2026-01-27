@@ -14,12 +14,15 @@ export interface CreateMoodEntry {
 }
 
 export const moodApi = {
-  // Get all mood entries for a user
-  async getAllMoods(userId: string) {
+  // Get all mood entries for the current user
+  async getAllMoods() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
     const { data, error } = await supabase
       .from("mood_entries")
       .select("*")
-      .eq("user_id", userId)
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
     if (error) throw error;
@@ -27,12 +30,15 @@ export const moodApi = {
   },
 
   // Get today's mood
-  async getTodayMood(userId: string) {
+  async getTodayMood() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
     const today = new Date().toISOString().split("T")[0];
     const { data, error } = await supabase
       .from("mood_entries")
       .select("*")
-      .eq("user_id", userId)
+      .eq("user_id", user.id)
       .gte("created_at", today)
       .order("created_at", { ascending: false })
       .limit(1)
@@ -43,11 +49,14 @@ export const moodApi = {
   },
 
   // Create a new mood entry
-  async createMood(userId: string, mood: CreateMoodEntry) {
+  async createMood(mood: CreateMoodEntry) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
     const { data, error } = await supabase
       .from("mood_entries")
       .insert({
-        user_id: userId,
+        user_id: user.id,
         mood: mood.mood,
         note: mood.note || null,
       })
@@ -59,11 +68,14 @@ export const moodApi = {
   },
 
   // Get mood entries by date range
-  async getMoodsByDateRange(userId: string, startDate: string, endDate: string) {
+  async getMoodsByDateRange(startDate: string, endDate: string) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
     const { data, error } = await supabase
       .from("mood_entries")
       .select("*")
-      .eq("user_id", userId)
+      .eq("user_id", user.id)
       .gte("created_at", startDate)
       .lte("created_at", endDate)
       .order("created_at", { ascending: false });
@@ -72,3 +84,4 @@ export const moodApi = {
     return data as MoodEntry[];
   },
 };
+

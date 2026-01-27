@@ -16,11 +16,14 @@ export interface CreateJournalEntry {
 
 export const journalApi = {
   // Get all journal entries for the current user
-  async getAllEntries(userId: string) {
+  async getAllEntries() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
     const { data, error } = await supabase
       .from("journal_entries")
       .select("*")
-      .eq("user_id", userId)
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
     if (error) throw error;
@@ -28,12 +31,15 @@ export const journalApi = {
   },
 
   // Get today's journal entries
-  async getTodayEntries(userId: string) {
+  async getTodayEntries() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
     const today = new Date().toISOString().split("T")[0];
     const { data, error } = await supabase
       .from("journal_entries")
       .select("*")
-      .eq("user_id", userId)
+      .eq("user_id", user.id)
       .gte("created_at", today)
       .order("created_at", { ascending: false });
 
@@ -42,11 +48,14 @@ export const journalApi = {
   },
 
   // Get entries by date range
-  async getEntriesByDateRange(userId: string, startDate: string, endDate: string) {
+  async getEntriesByDateRange(startDate: string, endDate: string) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
     const { data, error } = await supabase
       .from("journal_entries")
       .select("*")
-      .eq("user_id", userId)
+      .eq("user_id", user.id)
       .gte("created_at", startDate)
       .lte("created_at", endDate)
       .order("created_at", { ascending: false });
@@ -56,11 +65,14 @@ export const journalApi = {
   },
 
   // Create a new journal entry
-  async createEntry(userId: string, entry: CreateJournalEntry) {
+  async createEntry(entry: CreateJournalEntry) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
     const { data, error } = await supabase
       .from("journal_entries")
       .insert({
-        user_id: userId,
+        user_id: user.id,
         title: entry.title,
         content: entry.content || null,
       })
