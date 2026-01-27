@@ -106,3 +106,4 @@ After running the migration, generate types so TypeScript knows about your table
 
 **Need help deciding?** Let me know which approach you prefer and I can help you implement it! 😊
 
+

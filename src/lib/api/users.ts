@@ -7,6 +7,7 @@ export interface User {
 }
 
 export interface CreateUser {
+  id: string;
   email: string;
 }
 
@@ -40,8 +41,10 @@ export const usersApi = {
     const { data, error } = await supabase
       .from("users")
       .insert({
+        id: user.id,
         email: user.email,
       })
+
       .select()
       .single();
 
@@ -61,4 +64,5 @@ export const usersApi = {
     return await this.createUser({ email });
   },
 };
+
 

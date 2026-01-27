@@ -188,3 +188,4 @@ The Edge Function (`companion-reply`) follows this flow:
 
 **Need help?** Check Supabase documentation: https://supabase.com/docs
 
+

@@ -21,7 +21,7 @@ export const authApi = {
     // Create user in custom users table
     if (authData.user) {
       try {
-        await usersApi.createUser({ email });
+        await usersApi.createUser({ id: authData.user.id, email });
       } catch (error) {
         // User might already exist, that's okay
         console.log("User already exists in users table");
@@ -84,7 +84,7 @@ export const authApi = {
       // If user doesn't exist in custom table, create it
       if (user.email) {
         try {
-          return await usersApi.createUser({ email: user.email });
+          return await usersApi.createUser({ id: user.id, email: user.email });
         } catch (createError) {
           console.error("Error creating user:", createError);
           return null;
