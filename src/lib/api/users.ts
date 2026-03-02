@@ -3,12 +3,14 @@ import { supabase } from "@/integrations/supabase/client";
 export interface User {
   id: string;
   email: string;
+  name: string | null;
   created_at: string;
 }
 
 export interface CreateUser {
   id: string;
   email: string;
+  name?: string;
 }
 
 export const usersApi = {
@@ -43,8 +45,8 @@ export const usersApi = {
       .insert({
         id: user.id,
         email: user.email,
+        name: user.name || null,
       })
-
       .select()
       .single();
 
@@ -54,15 +56,21 @@ export const usersApi = {
 
   // Check if user exists, create if not
   async getOrCreateUser(id: string, email: string) {
-    // Try to get existing user
     const existing = await this.getUserByEmail(email);
-    if (existing) {
-      return existing;
-    }
-
-    // Create new user if doesn't exist
+    if (existing) return existing;
     return await this.createUser({ id, email });
   },
+
+  // Update display name
+  async updateName(id: string, name: string) {
+    const { data, error } = await supabase
+      .from("users")
+      .update({ name })
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data as User;
+  },
 };
-
-

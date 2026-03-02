@@ -71,8 +71,15 @@ const Journal = () => {
       setIsTyping(false);
       toast({
         title: "Entry saved! 💕",
-        description: "Your companion has replied!",
+        description: "Your companion is thinking...",
       });
+      // Poll twice for companion reply (Gemini takes ~2-5s)
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["journal-entries-today"] });
+      }, 4000);
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["journal-entries-today"] });
+      }, 9000);
     },
     onError: (error: any) => {
       setIsTyping(false);

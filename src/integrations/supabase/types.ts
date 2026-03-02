@@ -13,16 +13,19 @@ export type Database = {
         Row: {
           id: string
           email: string
+          name: string | null
           created_at: string
         }
         Insert: {
           id: string
           email: string
+          name?: string | null
           created_at?: string
         }
         Update: {
           id?: string
           email?: string
+          name?: string | null
           created_at?: string
         }
         Relationships: [
@@ -39,24 +42,30 @@ export type Database = {
         Row: {
           id: string
           user_id: string
-          title: string
-          content: string | null
+          entry_text: string | null
+          mood: string | null
+          companion_reply: string | null
+          date: string | null
           created_at: string
           updated_at: string
         }
         Insert: {
           id?: string
           user_id: string
-          title: string
-          content?: string | null
+          entry_text?: string | null
+          mood?: string | null
+          companion_reply?: string | null
+          date?: string | null
           created_at?: string
           updated_at?: string
         }
         Update: {
           id?: string
           user_id?: string
-          title?: string
-          content?: string | null
+          entry_text?: string | null
+          mood?: string | null
+          companion_reply?: string | null
+          date?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -293,4 +302,3 @@ export type CompositeTypes<
   : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
   ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
   : never
-

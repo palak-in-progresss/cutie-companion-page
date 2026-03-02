@@ -21,6 +21,7 @@ const Planner = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [newTask, setNewTask] = useState("");
+  const [newHabit, setNewHabit] = useState("");
   const [dailyQuote, setDailyQuote] = useState("");
 
   // Fetch today's tasks
@@ -33,40 +34,30 @@ const Planner = () => {
   const { data: habits = [], isLoading: habitsLoading } = useQuery({
     queryKey: ["habits-today"],
     queryFn: async () => {
-      // Initialize default habits if they don't exist
       await habitsApi.initializeDefaultHabits();
       return habitsApi.getTodayHabits();
     },
   });
 
-  // Set daily quote on mount
   useEffect(() => {
     const quote = motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
     setDailyQuote(quote);
   }, []);
 
-  // Create task mutation
+  // ── Task mutations ──────────────────────────────────────────
   const createTaskMutation = useMutation({
     mutationFn: (text: string) => tasksApi.createTask({ text }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks-today"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
       setNewTask("");
-      toast({
-        title: "Task added! ✨",
-        description: "You've got this!",
-      });
+      toast({ title: "Task added! ✨", description: "You've got this!" });
     },
     onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to add task",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: error.message || "Failed to add task", variant: "destructive" });
     },
   });
 
-  // Toggle task mutation
   const toggleTaskMutation = useMutation({
     mutationFn: (id: string) => tasksApi.toggleTask(id),
     onSuccess: () => {
@@ -75,20 +66,16 @@ const Planner = () => {
     },
   });
 
-  // Delete task mutation
   const deleteTaskMutation = useMutation({
     mutationFn: (id: string) => tasksApi.deleteTask(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks-today"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
-      toast({
-        title: "Task removed",
-        description: "Task deleted successfully",
-      });
+      toast({ title: "Task removed", description: "Task deleted successfully" });
     },
   });
 
-  // Toggle habit mutation
+  // ── Habit mutations ─────────────────────────────────────────
   const toggleHabitMutation = useMutation({
     mutationFn: (id: string) => habitsApi.toggleHabit(id),
     onSuccess: () => {
@@ -97,21 +84,36 @@ const Planner = () => {
     },
   });
 
+  const createHabitMutation = useMutation({
+    mutationFn: (label: string) => habitsApi.createHabit({ label }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["habits-today"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+      setNewHabit("");
+      toast({ title: "Habit added! 🌱", description: "Keep it up every day!" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message || "Failed to add habit", variant: "destructive" });
+    },
+  });
+
+  const deleteHabitMutation = useMutation({
+    mutationFn: (id: string) => habitsApi.deleteHabit(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["habits-today"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+    },
+  });
+
+  // ── Handlers ────────────────────────────────────────────────
   const addTask = () => {
     if (!newTask.trim()) return;
-    createTaskMutation.mutate(newTask);
+    createTaskMutation.mutate(newTask.trim());
   };
 
-  const toggleTask = (id: string) => {
-    toggleTaskMutation.mutate(id);
-  };
-
-  const deleteTask = (id: string) => {
-    deleteTaskMutation.mutate(id);
-  };
-
-  const toggleHabit = (id: string) => {
-    toggleHabitMutation.mutate(id);
+  const addHabit = () => {
+    if (!newHabit.trim()) return;
+    createHabitMutation.mutate(newHabit.trim());
   };
 
   const habitCompletion = habits.filter((h) => h.completed).length;
@@ -120,7 +122,7 @@ const Planner = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/5 to-accent/5 font-poppins relative overflow-hidden">
-      {/* Animated background elements */}
+      {/* Animated background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-10 left-10 w-80 h-80 bg-secondary/10 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute bottom-10 right-10 w-96 h-96 bg-accent/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "2s" }}></div>
@@ -136,36 +138,32 @@ const Planner = () => {
               Gentle Planner 🌼
             </h1>
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate("/journal")}
-              className="rounded-full hover:bg-primary/10 transition-all hover:scale-105"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Journal
-            </Button>
-          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/journal")}
+            className="rounded-full hover:bg-primary/10 transition-all hover:scale-105"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Journal
+          </Button>
         </div>
       </header>
 
       {/* Main Content */}
       <main className="pt-24 pb-20 px-4 relative z-10">
         <div className="container mx-auto max-w-4xl">
-          {/* Gentle Reminder */}
+          {/* Daily quote */}
           <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-3xl p-6 mb-6 text-center animate-fade-in hover:shadow-xl transition-all duration-300 border border-border/50 relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-secondary/5 animate-pulse"></div>
             <div className="relative flex items-center justify-center gap-3">
               <Flame className="w-6 h-6 text-primary animate-pulse" />
-              <p className="text-lg text-foreground font-medium">
-                {dailyQuote}
-              </p>
+              <p className="text-lg text-foreground font-medium">{dailyQuote}</p>
             </div>
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
-            {/* To-Do List */}
+            {/* ── To-Do List ─────────────────────────────────── */}
             <div className="bg-card/80 backdrop-blur-sm rounded-3xl p-6 shadow-lg border border-border animate-fade-in hover:shadow-xl transition-all duration-300 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-40 h-40 bg-primary/5 rounded-full blur-2xl"></div>
               <div className="relative">
@@ -181,9 +179,7 @@ const Planner = () => {
                     onChange={(e) => setNewTask(e.target.value)}
                     placeholder="Add a gentle task..."
                     className="rounded-full border-input focus:ring-2 focus:ring-primary transition-all"
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") addTask();
-                    }}
+                    onKeyDown={(e) => { if (e.key === "Enter") addTask(); }}
                     disabled={createTaskMutation.isPending}
                   />
                   <Button
@@ -209,28 +205,22 @@ const Planner = () => {
                         className="flex items-center gap-3 bg-background/50 rounded-2xl p-3 group hover:bg-background/80 transition-all duration-200 hover:scale-[1.02] border border-border/50"
                       >
                         <button
-                          onClick={() => toggleTask(task.id)}
-                          className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all hover:scale-110 ${
-                            task.completed
+                          onClick={() => toggleTaskMutation.mutate(task.id)}
+                          className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all hover:scale-110 ${task.completed
                               ? "bg-primary border-primary shadow-md"
                               : "border-muted-foreground hover:border-primary"
-                          }`}
+                            }`}
                         >
-                          {task.completed && (
-                            <Check className="w-3 h-3 text-primary-foreground" />
-                          )}
+                          {task.completed && <Check className="w-3 h-3 text-primary-foreground" />}
                         </button>
                         <span
-                          className={`flex-1 transition-all ${
-                            task.completed
-                              ? "line-through text-muted-foreground opacity-60"
-                              : "text-foreground"
-                          }`}
+                          className={`flex-1 transition-all ${task.completed ? "line-through text-muted-foreground opacity-60" : "text-foreground"
+                            }`}
                         >
                           {task.text}
                         </span>
                         <button
-                          onClick={() => deleteTask(task.id)}
+                          onClick={() => deleteTaskMutation.mutate(task.id)}
                           className="opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110 active:scale-95"
                         >
                           <X className="w-4 h-4 text-muted-foreground hover:text-destructive" />
@@ -242,7 +232,7 @@ const Planner = () => {
               </div>
             </div>
 
-            {/* Habits Tracker */}
+            {/* ── Habits Tracker ──────────────────────────────── */}
             <div className="bg-card/80 backdrop-blur-sm rounded-3xl p-6 shadow-lg border border-border animate-fade-in hover:shadow-xl transition-all duration-300 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-40 h-40 bg-secondary/5 rounded-full blur-2xl"></div>
               <div className="relative">
@@ -251,38 +241,61 @@ const Planner = () => {
                   💧 Daily Habits
                 </h2>
 
+                {/* Add Habit */}
+                <div className="flex gap-2 mb-4">
+                  <Input
+                    value={newHabit}
+                    onChange={(e) => setNewHabit(e.target.value)}
+                    placeholder="Add a new habit..."
+                    className="rounded-full border-input focus:ring-2 focus:ring-primary transition-all"
+                    onKeyDown={(e) => { if (e.key === "Enter") addHabit(); }}
+                    disabled={createHabitMutation.isPending}
+                  />
+                  <Button
+                    onClick={addHabit}
+                    size="icon"
+                    className="rounded-full shrink-0 hover:scale-110 active:scale-95 transition-all shadow-md hover:shadow-lg"
+                    disabled={createHabitMutation.isPending}
+                  >
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+
                 {habitsLoading ? (
                   <div className="text-center py-8">
                     <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                   </div>
                 ) : (
                   <>
-                    <div className="space-y-4">
+                    <div className="space-y-3 max-h-[300px] overflow-y-auto mb-4">
                       {habits.map((habit) => (
                         <div
                           key={habit.id}
-                          className="flex items-center gap-3 bg-background/50 rounded-2xl p-4 hover:bg-background/80 transition-all duration-200 hover:scale-[1.02] border border-border/50"
+                          className="flex items-center gap-3 bg-background/50 rounded-2xl p-3 group hover:bg-background/80 transition-all duration-200 hover:scale-[1.02] border border-border/50"
                         >
                           <Checkbox
-                            checked={habit.completed}
-                            onCheckedChange={() => toggleHabit(habit.id)}
+                            checked={habit.completed ?? false}
+                            onCheckedChange={() => toggleHabitMutation.mutate(habit.id)}
                             className="w-6 h-6 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                           />
                           <span
-                            className={`text-lg transition-all ${
-                              habit.completed
-                                ? "line-through text-muted-foreground opacity-60"
-                                : "text-foreground"
-                            }`}
+                            className={`flex-1 text-lg transition-all ${habit.completed ? "line-through text-muted-foreground opacity-60" : "text-foreground"
+                              }`}
                           >
                             {habit.emoji} {habit.label}
                           </span>
+                          <button
+                            onClick={() => deleteHabitMutation.mutate(habit.id)}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110 active:scale-95"
+                          >
+                            <X className="w-4 h-4 text-muted-foreground hover:text-destructive" />
+                          </button>
                         </div>
                       ))}
                     </div>
 
-                    {/* Progress */}
-                    <div className="mt-6 p-4 bg-gradient-to-r from-primary/10 to-secondary/10 rounded-2xl border border-border/50">
+                    {/* Progress bar */}
+                    <div className="p-4 bg-gradient-to-r from-primary/10 to-secondary/10 rounded-2xl border border-border/50">
                       <div className="flex items-center justify-between mb-2">
                         <p className="text-sm text-muted-foreground flex items-center gap-1">
                           <Sparkles className="w-3 h-3" />
@@ -296,9 +309,7 @@ const Planner = () => {
                         <div className="flex-1 bg-background/50 rounded-full h-3 overflow-hidden border border-border/50">
                           <div
                             className="bg-gradient-to-r from-primary to-secondary h-full transition-all duration-500 rounded-full shadow-sm"
-                            style={{
-                              width: `${completionPercentage}%`,
-                            }}
+                            style={{ width: `${completionPercentage}%` }}
                           ></div>
                         </div>
                         <span className="text-sm font-semibold text-foreground min-w-[3rem] text-right">
@@ -330,7 +341,6 @@ const Planner = () => {
         </div>
       </main>
 
-      {/* Footer */}
       <footer className="py-6 text-center text-sm text-muted-foreground relative z-10">
         Plan gently, grow consistently 🌸
       </footer>

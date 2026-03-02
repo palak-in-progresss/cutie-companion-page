@@ -23,19 +23,23 @@ const MoodCheck = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [userName, setUserName] = useState("Friend");
+  // selectedMood is now only for UI state — does NOT auto-save
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [moodNote, setMoodNote] = useState("");
   const [showConfirmation, setShowConfirmation] = useState(false);
 
-  // Fetch user profile
+  // Fetch user profile for display name
   const { data: profile } = useQuery({
     queryKey: ["user-profile"],
     queryFn: () => authApi.getUserProfile(),
   });
 
   useEffect(() => {
+    // Use name if available, fall back to the part before @ in email
     if (profile?.name) {
       setUserName(profile.name);
+    } else if (profile?.email) {
+      setUserName(profile.email.split("@")[0]);
     }
   }, [profile]);
 
@@ -61,11 +65,12 @@ const MoodCheck = () => {
     },
   });
 
-  const handleMoodSelect = (moodEmoji: string) => {
-    setSelectedMood(moodEmoji);
+  // Save is now explicit — triggered by button, not card click
+  const handleSaveMood = () => {
+    if (!selectedMood) return;
     createMoodMutation.mutate({
-      mood: moodEmoji,
-      note: moodNote || undefined,
+      mood: selectedMood,
+      note: moodNote.trim() || undefined,
     });
   };
 
@@ -73,10 +78,7 @@ const MoodCheck = () => {
     try {
       await authApi.signOut();
       navigate("/");
-      toast({
-        title: "Logged out",
-        description: "See you soon! 🌸",
-      });
+      toast({ title: "Logged out", description: "See you soon! 🌸" });
     } catch (error: any) {
       toast({
         title: "Error",
@@ -145,12 +147,15 @@ const MoodCheck = () => {
             </div>
           </div>
 
-          {/* Mood Selection */}
+          {/* Step 1: Pick a mood (no auto-save) */}
+          <p className="text-center text-sm text-muted-foreground mb-4 font-medium tracking-wide uppercase">
+            Step 1 — Pick your mood
+          </p>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8 animate-fade-in" style={{ animationDelay: '0.2s' }}>
             {moods.map((mood) => (
               <Card
                 key={mood.label}
-                onClick={() => handleMoodSelect(mood.emoji)}
+                onClick={() => setSelectedMood(mood.emoji)}
                 className={`
                   cursor-pointer transition-all duration-300 hover:scale-110 hover:shadow-2xl
                   border-2 rounded-3xl p-6 text-center relative overflow-hidden
@@ -175,19 +180,10 @@ const MoodCheck = () => {
             ))}
           </div>
 
-          {/* Confirmation Message */}
-          {showConfirmation && (
-            <div className="text-center mb-6 animate-fade-in">
-              <div className="inline-flex items-center gap-2 bg-primary/20 backdrop-blur-sm px-6 py-3 rounded-full border border-primary/30">
-                <CheckCircle2 className="w-5 h-5 text-primary animate-pulse" />
-                <p className="font-poppins text-lg text-primary font-semibold">
-                  Mood saved 💖
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Mood Notes Section */}
+          {/* Step 2: Optional note */}
+          <p className="text-center text-sm text-muted-foreground mb-4 font-medium tracking-wide uppercase">
+            Step 2 — Add a note (optional)
+          </p>
           <Card className="mb-8 rounded-3xl border-border bg-card/50 backdrop-blur-sm p-6 animate-fade-in hover:shadow-xl transition-all duration-300" style={{ animationDelay: '0.4s' }}>
             <label className="font-poppins font-semibold text-lg text-foreground mb-3 block flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-primary" />
@@ -200,6 +196,30 @@ const MoodCheck = () => {
               className="min-h-[120px] rounded-2xl border-input bg-background/80 focus:ring-2 focus:ring-primary resize-none transition-all"
             />
           </Card>
+
+          {/* Confirmation Message */}
+          {showConfirmation && (
+            <div className="text-center mb-6 animate-fade-in">
+              <div className="inline-flex items-center gap-2 bg-primary/20 backdrop-blur-sm px-6 py-3 rounded-full border border-primary/30">
+                <CheckCircle2 className="w-5 h-5 text-primary animate-pulse" />
+                <p className="font-poppins text-lg text-primary font-semibold">
+                  Mood saved 💖
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Step 3: Save button */}
+          <div className="flex justify-center mb-8 animate-fade-in" style={{ animationDelay: '0.5s' }}>
+            <Button
+              onClick={handleSaveMood}
+              disabled={!selectedMood || createMoodMutation.isPending}
+              size="lg"
+              className="font-poppins font-semibold text-lg rounded-full px-12 py-6 shadow-xl hover:shadow-2xl transition-all hover:scale-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed bg-gradient-to-r from-primary to-secondary text-primary-foreground"
+            >
+              {createMoodMutation.isPending ? "Saving... 💫" : "Save my mood ✨"}
+            </Button>
+          </div>
 
           {/* Navigation Buttons */}
           <div className="grid md:grid-cols-2 gap-6 animate-fade-in" style={{ animationDelay: '0.6s' }}>
